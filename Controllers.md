@@ -107,6 +107,8 @@ O parâmetro `TaskController` é o nome do controlador que estamos criando e o `
 
 **Importante:** considere que não temos mais o controlador criado na seção anterior deste texto. 
 
+Alem disso, este controlador tem seu arquivo correspondente salvo em `app/Http/Controllers/TaskController.php`.
+
 O resultado do comando acima será:
 
 ```php
@@ -226,7 +228,7 @@ class TaskController extends Controller
 }
 ```
 
-A conclusão final é a seguinte: registramos no web.php o nosso controlador resource. Lá são definidas as roats conforme vimos e na classe TaskController implementamos as funções necessárias que antes estavam no web.php
+A conclusão final é a seguinte: registramos no web.php o nosso controlador resource. Lá são definidas as roats conforme vimos e na classe TaskController implementamos as funções necessárias que antes estavam no web.php.
 
 
 
