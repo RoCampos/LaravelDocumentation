@@ -1,8 +1,8 @@
 # Configuração de Acesso ao Banco de Dados
 
-Na seção sobre controladores, abordamos o papel do controlador como orquestrador das ações da aplicação. E uma das finalidades do controlador é usar modelos para acessar a camada de dados e obter as informações do banco e também levar informações para banco.
+Na capítulo sobre controladores, abordamos o seu papel de orquestrador das ações da aplicação. Uma das finalidades do controlador é usar modelos para acessar a camada de dados e obter e levar as informações ao banco de dados.
 
-Neste capítulo, vamos explorar o acesso ao banco de dados de acordo com o modelo `MVC`.
+Agora vamos explorar o acesso ao banco de dados de acordo com o modelo `MVC` e os recursos do Laravel.
 
 O primeiro passo é configurar o acesso ao banco de dados. Para tanto, vamos precisar configurar dois arquivos:
 - config/database.php
@@ -130,6 +130,8 @@ O resultado esperado está ilustrado a seguir para a conexão utiliando o sqlite
 
 
 ## Usando banco de dados MYSql
+
+
 
 # Migrations
 
