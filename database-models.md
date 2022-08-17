@@ -8,9 +8,9 @@ O primeiro passo é configurar o acesso ao banco de dados. Para tanto, vamos pre
 - config/database.php
 - .env
 
-As informações presentes nos dois arquivos são, de certa forma, redutantes. O laravel procura as informações de conexão com o banco de dados no arquivo `database.php`. Neste arquivo, tem definições de informações de acesso ao banco que ficam definidas no arquivo `.env`. Antes de vermos as configurações em si, por que temos essa relação dos dois arquivos?
+O arquivo `config/database.php` é utilizado exclusivamente para guardar as configurações a respeito do banco de dados da aplicação. Já o arquivo `.env` guarda informações de configurações de modo geral, inclusive configurações do banco. As informações presentes no arquivo .env a respeito do banco de dados também estão presentes no arquivo. Antes de vermos as configurações em si, por que temos essa relação dos dois arquivos?
 
-O arquivo `.env` não deve ser compartilhado publicamente, ele não fica no github ou outro repositório de código e, portanto, é o lugar onde podemos ter mais segurança para adicionar, por exemplo, senha de acesso ao banco. As informações necessárias no `database.php` são obtidas do `.env`.
+O arquivo `.env` não deve ser compartilhado publicamente, ele não fica no github ou outro repositório de código e, portanto, é o lugar onde podemos ter mais segurança para adicionar, por exemplo, senha de acesso ao banco. As informações necessárias no `database.php` pode ser definidas apenas do `.env`. Desse modo, não sendo necessário definí-las no database.php.
 
 ## Usando banco de dados SQLITE
 
@@ -131,7 +131,64 @@ O resultado esperado está ilustrado a seguir para a conexão utiliando o sqlite
 
 ## Usando banco de dados MYSql
 
+Na seção anterior, vimos como conectar nossa aplicação com o banco de dados SQLITE. Agora vamos ver como fazer o mesmo com o `MySQL`. O primeiro passo é ter o MySQL instalado em sua máquina. Neste documento, será considerado o ambiente local de desenvolvimento e isso é importante na configuração da conexão com banco de dados.
 
+Após a instalação do MySQL, você deve criar o esquema de banco de dados da sua aplicação. Não precisa criar as tabelas em si e seus relacionamentos neste momento. Na próxima seção, vamos falar sobre as tabelas. Para criar o esquema de banco de dados do exemplo que estamos vendo, utilizarei o seguinte comando no MySQL:
+
+```SQL
+create database todolistapp;
+```
+
+Em seguida, vamos configurar o arquivo `.env` da seguinte forma:
+
+```bash
+# mysql connection
+MYSQL_CONNECTION=mysql
+DB_HOST=127.0.0.1 
+DB_PORT=3306
+DB_DATABASE=todolistapp
+DB_USERNAME=root
+DB_PASSWORD=romerito
+```
+
+Observe que a configuração para o MySQL possui mais informações. Vamos lá:
+ - MYSQL_CONNECTION: indica o nome da conexão que vamos utilizar que é `mysql`. 
+ - DB_HOST: indica o host do banco, ou seja, o lugar onde o banco está instalado. Neste exemplo, é o mesmo da aplicação.
+ - DB_PORT: é a porta utilizada para comunicação com banco e está definida com a porta padrão do MySQL.
+ - DB_DATABASE: indica o nome do esquema de banco de dados que você tem no MySQL - seu banco.
+ - DB_USERNAME: nome do usuário que tem acesso ao banco para realizar operações. No exemplo, o usuário root padrão da instalação.
+ - DB_PASSWORD: senha do usuário para acesso ao banco.
+
+ Todas essas informações também podem ser inseridas no arquivo `database.php`. Entretanto, lembre-se que este arquivo por padrão fica disponível em repositórios caso você adicione seu projeto em dos repostórios disponíveis como Github.
+
+ Mas como o Laravel obtém esses dados para conectar a aplicação com o banco e dados se elas não devem ficar no `database.php`? A Resposta é simples, da mesma forma que fez com o SQLITE. Veja o trecho do código de configuração do MySQL no arquivo `database.php`:
+
+ ```php
+ //trecho do arquivo database.php com configuração do mysql
+  'mysql' => [
+    'driver' => 'mysql',
+    'url' => env('DATABASE_URL'),
+    'host' => env('DB_HOST', '127.0.0.1'),
+    'port' => env('DB_PORT', '3306'),
+    'database' => env('DB_DATABASE', 'forge'),
+    'username' => env('DB_USERNAME', 'forge'),
+    'password' => env('DB_PASSWORD', ''),
+    'unix_socket' => env('DB_SOCKET', ''),
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_unicode_ci',
+    'prefix' => '',
+    'prefix_indexes' => true,
+    'strict' => true,
+    'engine' => null,
+    'options' => extension_loaded('pdo_mysql') ? array_filter([
+        PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+    ]) : [],
+  ],
+ ```
+
+ Nas configurações acima, observe o uso da funçao `env()` para obter os valores de configuração do banco que foram adicionados ao arquivov `.env`.
+
+ Para testar se a conexão com MySQL e seu banco estão satisfeitas, use o mesmo procedimento indicado no teste do SQLITE.
 
 # Migrations
 
