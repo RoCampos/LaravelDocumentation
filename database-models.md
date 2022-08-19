@@ -186,18 +186,128 @@ Observe que a configuração para o MySQL possui mais informações. Vamos lá:
   ],
  ```
 
- Nas configurações acima, observe o uso da funçao `env()` para obter os valores de configuração do banco que foram adicionados ao arquivov `.env`.
+Nas configurações acima, observe o uso da funçao `env()` para obter os valores de configuração do banco que foram adicionados ao arquivov `.env`.
 
- Para testar se a conexão com MySQL e seu banco estão satisfeitas, use o mesmo procedimento indicado no teste do SQLITE.
+Para testar se a conexão com MySQL e seu banco estão satisfeitas, use o mesmo procedimento indicado no teste do SQLITE.
+
+Até aqui você deve estar fazendo a seguinte pergunta: Onde estão as tabelas do banco de dados? Veremos a resposta a seguir.
 
 # Migrations
 
+O nosso banco de dados será construído a partir do conceito de Migrations (migrações). As migrações podem ser vistas de forma análoga ao versionamento do software. Imagine que você lança uma versão inicial do seu projeto, digamos versão 0.1, e continua trabalhando em novas funcionalidades e lança versões novas 0.2, 0.3 e assim por dia. Com o Banco de dados é a mesma coisa quando utilizamos as migrations.
+
+Com as migrations podemos criar, alterar ou remover tabelas da nossa base de dados sem necessariamente manipular o MySQL diretamente. 
+
+No Laravel, podemos definir migratinos para criar uma tabela e migrations para alterar uma tabela. A medida que vamos escrevndo migrations para criar e alterar as tabelas do banco estamos, de certa forma, criando novas versões do nosso banco de dados. Sugiro que você busque mais leituras sobre esse tópido: vale a pena!
+
 ## Criando Migrations
+
+Antes de criarmos uma migração vamos observar a figura abaixo que define, por hora, o esquema de banco de dados da aplicação de exemplo:
+
+<img src="./tasklist.jpeg" width=300 /> 
+
+O esquema de banco de dados da aplicação terá duas tabelas para guardar usuários e tarefas. 
+
+Podemos utilizar o `artisan` para criar uma migration. Vamos fazer a migration para a tabela Task com  o comando abaixo:
+
+> php artisan make:migration create_tasks_table
+
+Indicamos no comando acima que vamos criar uma migration e seu nome será create_tasks_table. O resultado é o arquivo `create_tasks_table.php` armazenado na pasta `database/migrations/create_tasks_table.php`. O conteúdo dele é ilustrado abaixo:
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id();            
+            $table->string('description'); 
+            $table->unsignedBigInteger('user_id'); 
+            $table->boolean('status')->default(false);            
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users');
+            
+            $table->timestamps();
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('tasks');
+    }
+};
+```
+
+A migration vem com duas funções: `up` e `down`. A função `up` é utilizada para criar uma tabela no banco de dados com as definições que estão dentro da função `Schema::create`. Já a função `down` tem o papel de excluir a tabela do banco de dados. A saber o nome da tabela será `tasks` e isso foi definido quando adicionamos o arquivo `create_tasks_table`.
+
+A esta altura você deve ter observado o conteúdo da função `up` e notado alguns similaridades com as definições de tabela que geralmente fazemos no MySQL. Se pensou assim, está corretíssimo. Através da variável `$table` podemos definir as colunas: `id`, `description`, `status` e outros que forem necessários.
+
+## Relacionamentos nas migrations
+
+Você deve ter notado na figura que ilustra as entidades User e Task que elas possuem um relacionamento. Esse relacionamento deve ser expresso na migração para ser adicionado no MySQL. Ele expresso por `chave-estrangeira` e são necessários dois passos:
+
+- Definir a coluna que vai guardar a chave-estrangeira: 
+```php
+$table->unsignedBigInteger('user_id');
+```
+- Adicionar a definição de chave estrangeira:
+```php
+ //indica o a coluna chave estrangeira
+ $table->foreign('user_id')
+    ->references('id') //id na tabela original
+    ->on('users'); //indica a tabela original
+```
 
 ## Comandos Essenciais
 
-# Models
+# Modelos
+
+Nas seções anteriores, a configuração de conexão com o banco de dados foi realizada e um exemplo de migations foi criado. Observe nos arquivos presentes em `database/migration` que há várias outas migrations que o próprio Laravel utiliza. Voltaremos a falar delas quando for adicionar autenticação de usuários ao sistema. Por hora, observe que lá há uma migration `create_users_table`, que adicionará a tabela de usuários. Portanto, nosso esquema de banco de dados para a aplicação `todolist` está pronto.
+
+Para acessarmos os dados do banco, vamos utilizar o conceito de modelos. A camada de modelo inclui os modelos que temos e eles estão relacionados as endidades que modelos para o nosso problema. No caso do exemplo discutido aqui temos dois modelos: `User` e `Task`. O modelo `User` já vem pronto e foi definido pela equipe do Laravel. Nós podemos modificá-lo para atender demandas específicas da nossa aplicação. 
+
+Desta maneira precisamos criar o nosso modelo `Task` que é específico do nosso problema: gerenciar tarefas.
 
 ## Criando Modelos
 
+O Laravel fornece um comando simples e intuitivo para criação de modelos. O comando abaixo vai criar o modelo `Task`:
+
+> php artisan make:model Task
+
+O resultado do comando acima é ilustrado abaixo:
+
+```php
+//Código do modelo App\Models\Task
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Task extends Model
+{
+    use HasFactory;
+
+}
+
+```
+
 ## Relationamentos entre modelos
+
+# Modelos e Controladores
+
+## Operação Salvar Tarefa
+
+## Listar todas as tarefas
+
+## Editar Tarefa
+
+## Remover Tarefa
