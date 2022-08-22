@@ -300,9 +300,44 @@ class Task extends Model
 
 ```
 
-## Relationamentos entre modelos
+O modelo gerado pelo artisan nos permite realizar muitas operacoes de acesso ao banco de dados. Nas secoes seguintes, vamos ver alguns exemplos de como usar o modelo.
+
+## Relacionamentos entre entidades
+
+Até aqui já temos uma boa infraestrutura para o acesso ao banco de dados da nossa aplicacão. Já realizamos a configuração com o banco de dados, definimos uma migracão para criar a tabela tarefas e acabamos de definir um modelo.
+
+Há um detalhe importante para fecharmos a implementacão de acesso ao banco de dados para este exemplo (até aqui pelo menos). Trata-se de definir no modelo Task o relacionamento que existe na migracão e foi implementado no banco de dados. Relacionamento 1:N entre usuários e tarefas.
+
+A classe Task vai passar a ter a seguinte implementacão:
+
+```php
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Task extends Model
+{
+    use HasFactory;
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+}
+```
+
+Na implementacão da função `user()`, nós indicamos para o Laravel recuperar o usuário relacionado a tarefa (Lembre-se que cada tarefa tem um usuário associado a ela). Isso é especificado pelos parâmetros da funcão `belongsTo` (pertence à): `User::class`, `user_id`, `id`. O primeiro argumento indica a classe a qual o modelo Task está relacionado que é a classe User. O segundo argumento, `user_id`, indica qual é a chave estrangeira presente na tabela `tasks` (onde ficam as tarefas). Por fim, o argumento `id` é a coluna na tabela usuários que está relacionada a chave estrangeira `user_id`.
+
+A funcão `user()` vai permitir que o acesso ao usuário relacionado com uma tarefa específica seja feita de forma mais prática no contexto do uso da linguagem php. Na secão seguinte, vamos explorar o uso dessa funcao e você verá o quando ela é útil. Muitas outras podem ser definidas de forma análoga a esta.
 
 # Modelos e Controladores
+
+Se você chegou até aqui na leitura e também aplicacão em seu projeto, suponho que já possui toda a infraestrutura de banco de dados do exemplo pronta para ser utilizada. 
+
+Neste momento, utilizar o modelo Task para acessar o banco de dados e realizar operacões básicas. Entretanto, vamos fazer isso diretamente do controlador TaskController e vincular os dados as views que já temos no projeto. Observe a pasta `resources/views/todolist`. 
 
 ## Operação Salvar Tarefa
 
