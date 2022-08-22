@@ -341,8 +341,177 @@ Neste momento, utilizar o modelo Task para acessar o banco de dados e realizar o
 
 ## Operação Salvar Tarefa
 
+A operação de salvar um registro de tarefas no banco de dados envolve os seguintes arquivos do projeto: `TaskController`, `todolist/create.blade.php` e `app/Models/Task`.
+
+Vamos iniciar pelo fato de já existir duas rotas para criação de tarefas no banco de dados. São elas: `/tasks/create` e `/tasks`. Se está com dúvida rode o comando a seguir (Aproveite e veja o capítulo sobre controladores, espcíficamente a parte sobre `Resource`.):
+
+> php artisan route:list
+
+As rotas mencionadas acima estão associdadas a duas fuções do controlador `TaskController` que são: `create()` e `store()`. O código da função `create()` é ilustrado a seguir:
+
+```php
+//trecho de código do arquivo TaskController.php
+public function create()
+{
+    return view('todolist.create');
+}
+```
+
+Esta função vai simplemente retornar para o usuário o formulário para preenchimento dos dados da tarefa, que neste exemplo é apenas uma descrição. Abaixo segue trecho do formulário (sem CSS).
+
+```html
+<form action="{{url('/tasks')}}" method="POST">
+    @csrf
+    <div class="row m-3">
+        <label>Description</label>
+        <div>
+            <input type="text" name="task" id="task">
+        </div>                                                       
+    </div>
+    <div>
+        <div>
+            <button type="submit">Entrar</button>
+        </div>
+    </div> 
+</form>
+```
+
+Este formulário é parte da resposta que o usuário tem quando acessar `/tasks/create`. Agora que tem o formulário, ele preenche e envia para o servidor. Neste formulário, tem informações importantes para o servidor saber o que fazer com o envio. 
+
+Primeiro, o formulário será enviado para uma rota `/tasks` usando uma requisição do tipo `method=POST`. Além disso, adicionarmos a tag blade `@csrf` que permite dar mais proteção contra o ataque LINK.
+
+Como sabermos que função de TaskController vai processar o formulário enviado para a rota com o método especificado no parágrafo anterior? Podemos observar a lista de rotas da aplicação com `php artisan route:list` novamente e ver o seguinte:
+
+```bash
+POST                    tasks ...... tasks.store › TaskController@store
+```
+
+Observe que o formulário será enviado para a função `store` de `TaskController`. Logo, vamos focar na implementação desta função para providenciar o cadastro da tarefa. A seguir o código da função `store()`:
+
+```php
+public function store(Request $request)
+{
+    $description = $request->post('task');
+    $task = new Task;
+    $task->description = $description;
+    $task->user_id = 1;
+    $task->save();
+
+    return redirect(url('/tasks'));
+}
+```
+
+A função `store()` tem um argumento que é um objeto da classe `Request`. Este objeto é injetado na função pelo Laravel. Com ele podemos obter informações da requisição enviada para esta função. É exatamente isso que faremos. Primeiro, vamos pegar o dado do formulário cujo `input` tem o nome de `task`. Para isto, basta usar a função `$request->post()`. Em seguida, criamos uma tarefa `$task = new Task;`, adicionamos a ela o usuário que é dono da tarefa e, por fim, salvamos. Por questão de simplicidade, há um usuário padrão no sistema e seu `id=1`. A função `save()` faz a operação `INSERT` do `SQL`. Por fim, o usuário é redirecionado para a página de listagem das tarefas.  
+
 ## Listar todas as tarefas
 
+Você observou na seção anterior que ao salvarmos uma nova tarefa o usuário é encaminhado para a rota `/tasks`. Esta rota é usada para listar todas as tarefas do usuário. A função do controlador `TaskController` associada a ela é `index()`. A implementação da rota está ilustrada a seguir:
+
+```php
+//trecho de código do arquivo TaskController.php
+public function index()
+{
+    $tasks = Task::all();
+    return view('todolist.dashboard', [
+        'tasks' => $tasks,
+    ]);
+}
+```
+
+Observe dois detalhes: o uso do modelo `Task` e também a passagem da variável `$tasks` para a função `view`. 
+
+Primeiro, vamos iniciar pelo uso de Task::all(). Esta função fará uma consulta ao banco de dados do tipo `SELECT * FROM tasks`. O resultado será armazenado em `$tasks`. 
+
+Segundo, com o resultado das tarefas guardado em `$tasks` vamos construir a página de listagem das tarefas. Para isso, utilizamos o template `todolist.dashboard`. Abaixo segue o trecho de código onde os dados das tarefas são utilizados para construir a página.
+
+```html
+<ul class="list-group list-group-flush mt-4">
+    @foreach ($tasks as $item)
+    <li class="list-group-item d-flex flex-wrap align-items-center">                            
+        <p class="flex-grow-1">
+            <a href="{{url('/tasks', ['id'=>$item->id])}}">
+                {{$item->description}}
+            </a>
+        </p>
+        @if ($item->status)
+        <span class="badge bg-success">
+            <i class="bi bi-check-square-fill"></i>
+            done
+        </span>    
+        @else
+        <span class="badge bg-warning text-black">
+            <i class="bi bi-clock"></i>
+            pending
+        </span>                            
+        @endif
+    </li>   
+    @endforeach
+</ul>
+```
+
+Esse código vai gerar a seguint tela: ![](./tasklist2.jpeg)
+
+Utilizamos a tag blade `@foreach` para realizar um laço de repetição com as tarefas que conectamos ao template. Para cada `$item` da lista, vamos adicionar um elemento HTML `li` a página. Neste elemento, haverá duas informações: `$item->description` e `$item->status`. O status é utilizado na declaração `@if @else @endif` para determinar uma mensagem mais amigável na interface. 
+
 ## Editar Tarefa
+
+A edição de tarefas também envole o uso de duas rotas e, no nosso exemplo, duas funções no controlador `TaskController`. As rotas são definidas como: `/tasks/{task}/edit` e `tasks/{task}`. As funções no controlador são `edit()` e `update()`, respectivamente.
+
+A rota para edição de uma função precisa de um parâmetro cujo nome está definido como `task` e o valor a ser passado para ele será um inteiro indicando o id da tarefa específica. Por exemplo, a rota `/tasks/1/edit` indica que estamos solicitando ao servidor o formulário para edição da tarefa `id=1`. A função no controlador responsável por isso é a seguinte:
+
+```php
+//trecho do controlador TaskController.php
+public function edit($id)
+{
+    $task = Task::find ($id);
+
+    return view('todolist.edit', [
+        'task' => $task,
+    ]);
+}
+```
+
+Nesta função, vamos retonar o template `todolist.edit` e passaremos para ele a tarefa a ser editada. Por que fazemos isso? Isso é feito para que o formulário acessado pelo usuário para edição tenha os dados da tarefa que ele deseja editar.
+
+O código do formulário para edição está definida como a seguir:
+
+```HTML
+<!-- trecho de edit.blade.php -->
+<form action="{{url('/tasks', ['task'=>$task->id])}}" method="POST">
+    @csrf
+    @method('PUT')
+    <div class="row m-3">
+        <label for="task" class="label">Description</label>
+        <div class="col">
+            <input class="form-control" type="text" name="task" id="task" value="{{$task->description}}">
+        </div>                                                       
+    </div>
+    <div class="row m-3">
+        <div class="d-grid justify-content-end">
+            <button type="submit" class="btn btn-success btn-sm btn-block">Entrar</button>
+        </div>
+    </div> 
+</form>
+```` 
+
+A rota para onde este formulário será enviada é `/tasks/{task}` e utiliza o verbo HTTP `PUT`. Entretanto, o HTML não utiliza este método. Portanto, definidomos `method=POST` e adicionar a tag blade `@method('PUT')` dentro do formulário. Desta maneira, o Controlador receberá a requisção de atualização da tarefa na rota correta. Observe que utilizar na action a seguinte atribuição `{{url('/tasks', ['task'=>$task->id])}}` . Aqui indicamos que vamos utilizar a rota `/tasks/{task}` onde `{task}` será o valor de `$task->id`. A tarefa que estamos tentando editar. Imaginando que você queira editar a primeira tarefa salva no banco de dados e de `id=1`, então teríamos `/tasks/1`.
+
+Ao chegar no servidor, a função que vai processar a atualização dos dados é `update()` cujo código é ilustrado abaixo:
+
+```php
+public function update(Request $request, $id)
+{
+    $task = Task::find($id);
+    
+    $task->description = $request->post('task');        
+    $task->save();
+
+    return redirect()->to(route('tasks.show', [
+        'task' => $task->id,
+    ]));
+}
+```
+
+A função update recebe dois parâmetros: O `Request` que permite obter dados do formulário com novas informações da tarefa e também o `id` da tarefa que está sendo atualizada. A primeira coisa a ser feita na função é obter, através de Task::find($id), a tarefa que será atualizada e em seguida obter usando `$request->post` a nova descrição da tarefa (por hora somente esta atualização é realizada). POr fim, salvar a atualização com $task->save() e redirecionar o usuário para rota `show`. 
 
 ## Remover Tarefa
