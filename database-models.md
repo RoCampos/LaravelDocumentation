@@ -215,6 +215,7 @@ Podemos utilizar o `artisan` para criar uma migration. Vamos fazer a migration p
 Indicamos no comando acima que vamos criar uma migration e seu nome será create_tasks_table. O resultado é o arquivo `create_tasks_table.php` armazenado na pasta `database/migrations/create_tasks_table.php`. O conteúdo dele é ilustrado abaixo:
 
 ```php
+// Trecho da migração de criação da tabela tarefas
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -265,8 +266,6 @@ $table->unsignedBigInteger('user_id');
     ->on('users'); //indica a tabela original
 ```
 
-## Comandos Essenciais
-
 # Modelos
 
 Nas seções anteriores, a configuração de conexão com o banco de dados foi realizada e um exemplo de migations foi criado. Observe nos arquivos presentes em `database/migration` que há várias outas migrations que o próprio Laravel utiliza. Voltaremos a falar delas quando for adicionar autenticação de usuários ao sistema. Por hora, observe que lá há uma migration `create_users_table`, que adicionará a tabela de usuários. Portanto, nosso esquema de banco de dados para a aplicação `todolist` está pronto.
@@ -311,9 +310,8 @@ Há um detalhe importante para fecharmos a implementacão de acesso ao banco de 
 A classe Task vai passar a ter a seguinte implementacão:
 
 ```php
-
+// Trecho de Task.php
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -360,6 +358,7 @@ public function create()
 Esta função vai simplemente retornar para o usuário o formulário para preenchimento dos dados da tarefa, que neste exemplo é apenas uma descrição. Abaixo segue trecho do formulário (sem CSS).
 
 ```html
+<!-- Trecho de create.blade.php -->
 <form action="{{url('/tasks')}}" method="POST">
     @csrf
     <div class="row m-3">
@@ -389,6 +388,7 @@ POST                    tasks ...... tasks.store › TaskController@store
 Observe que o formulário será enviado para a função `store` de `TaskController`. Logo, vamos focar na implementação desta função para providenciar o cadastro da tarefa. A seguir o código da função `store()`:
 
 ```php
+// trecho de TaskController.php
 public function store(Request $request)
 {
     $description = $request->post('task');
@@ -425,6 +425,7 @@ Primeiro, vamos iniciar pelo uso de Task::all(). Esta função fará uma consult
 Segundo, com o resultado das tarefas guardado em `$tasks` vamos construir a página de listagem das tarefas. Para isso, utilizamos o template `todolist.dashboard`. Abaixo segue o trecho de código onde os dados das tarefas são utilizados para construir a página.
 
 ```html
+<!-- Trecho de dashboard.blade.php -->
 <ul class="list-group list-group-flush mt-4">
     @foreach ($tasks as $item)
     <li class="list-group-item d-flex flex-wrap align-items-center">                            
@@ -499,11 +500,16 @@ A rota para onde este formulário será enviada é `/tasks/{task}` e utiliza o v
 Ao chegar no servidor, a função que vai processar a atualização dos dados é `update()` cujo código é ilustrado abaixo:
 
 ```php
+<!-- trecho de TaskController.php -->
 public function update(Request $request, $id)
 {
     $task = Task::find($id);
-    
-    $task->description = $request->post('task');        
+
+    if (NULL !== $request->post('task'))
+        $task->description = $request->post('task');
+    else 
+        $task->status = 1;
+
     $task->save();
 
     return redirect()->to(route('tasks.show', [
@@ -512,6 +518,88 @@ public function update(Request $request, $id)
 }
 ```
 
-A função update recebe dois parâmetros: O `Request` que permite obter dados do formulário com novas informações da tarefa e também o `id` da tarefa que está sendo atualizada. A primeira coisa a ser feita na função é obter, através de Task::find($id), a tarefa que será atualizada e em seguida obter usando `$request->post` a nova descrição da tarefa (por hora somente esta atualização é realizada). POr fim, salvar a atualização com $task->save() e redirecionar o usuário para rota `show`. 
+A função update recebe dois parâmetros: O `Request` que permite obter dados do formulário com novas informações da tarefa e também o `id` da tarefa que está sendo atualizada. A primeira coisa a ser feita na função é obter, através de `Task::find($id)`, a tarefa que será atualizada e em seguida obtém-se a nova descrição da tarefa usando `$request->post` (por hora somente esta atualização é realizada). Um detalhe importante é que o uso do if nesta função. Caso tenha aluma nova descrição no `$request->post`, então ela será aplicada e o status da tarefa será mantido. Por fim, salvar a atualização com $task->save() e redirecionar o usuário para rota `show`. 
+
+## Mostrar Tarefa
+
+A operação de mostrar uma tarefa consite em adicionar um link para a tarefa específica na listagem de tarefas que vimos na seção Listar todas as Tarefas. O código abaixo ilustra trecho do HTML que permite acessar uma tarefa específica e mostrá-la:
+
+```html
+<!-- trecho do arquivo dashboard.blade.php -->
+<p class="flex-grow-1">
+    <a href="{{url('/tasks', ['id'=>$item->id])}}">
+        {{$item->description}}
+    </a>
+</p>
+```
+
+Na tag `<p>` acima, adicionamos um link. Este link é usado para acessar a página que mostra uma tarefa espefícia. Esta rota é `/tasks` e utiliza o método `GET`. A rota definida é `/tasks/{task}` e o href gerado será `tasks/1` quando `id => 1`, ou seja, quando formos mostrar a tarefa cujo `id=1`. Já no lado do servidor, temos a seguite função de `TaskController` associada a esta rota: 
+
+```php
+public function show($id)
+{
+    $task = Task::find($id);
+    return view('todolist.show', [
+        'task' => $task
+    ]);
+}
+```
+
+O que a função `show()` faz é buscar a tarefa no banco com base no `$id` passado na rota. A variável $task terá seu valor passado para o template `todolist.show`. Este processo é análogo ao exemplo da listagem de todas as tarefas explicado neste texto.
+
 
 ## Remover Tarefa
+
+Esta operação não exige ter uma página completa como a criação/edição de tarefas. O que precisamos é de um botão que faça uma requição para rota de remoção e passe o `id` da tarefa a ser removida. 
+
+Este botão será adicionado a página `todolist.show`. Além disso, vamos ter a seguinte condição. Se a tarefa estiver pendente, ela não pode ser removida. Sendo removida apenas quando for marcada como concluída (com o projeto em execução, você pode testar estas opções).
+
+Abaixo segue o trecho da página show que ilsutra a definição do botão para remoção da tarefa(sem CSS):
+
+```html
+<!-- trecho do código de todolist.show -->
+<div class="col-md-2">
+    <div>
+        @if ($task->status)
+        <span >
+            <form action="{{url('/tasks', ['id'=>$task->id])}}" method="POST">
+                @csrf
+                @method('DELETE')
+                <button></button>
+            </form>
+        </span>    
+        @else
+        <span>
+            <form action="{{url('/tasks', ['id'=>$task->id, 'status'=1])}}" method="POST">
+                @csrf
+                @method('PUT')
+                <button></button>
+            </form>        
+        </span>    
+        @endif
+    </div>
+</div>
+```
+
+Est trecho de código mostra apenas a parte onde definimos dois botões com base no `$task->status` da tarefa. Observe a tag `@if @else @endif` que é utilizada. Se a tarefa estiver como pendente, vamos definir um form que usa `@method('PUT')`, que já foi mencionado na seção de edição de tarefas. Neste caso, ao enviarmos o formuário de atualização do registro, não enviamos dados para alteração do texto da tarefa e de acordo com a função `update()`, ilustrada novamente abaixo, o servidor vai atualizar o status da tarefa:
+
+```php
+// trecho de TaskController.php
+public function update(Request $request, $id)
+{
+    $task = Task::find($id);
+
+    if (NULL !== $request->post('task'))
+        $task->description = $request->post('task');
+    else 
+        $task->status = 1;
+
+    $task->save();
+
+    return redirect()->to(route('tasks.show', [
+        'task' => $task->id,
+    ]));
+}
+```
+
+Como o formulário de atualização da tarefa para marcá-la como concluída não envia o input `task`, o código executado é o `else`. Neste caso, `$task->status = 1;`.
