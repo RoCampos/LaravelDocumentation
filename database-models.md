@@ -8,13 +8,13 @@ O primeiro passo é configurar o acesso ao banco de dados. Para tanto, vamos pre
 - config/database.php
 - .env
 
-O arquivo `config/database.php` é utilizado exclusivamente para guardar as configurações a respeito do banco de dados da aplicação. Já o arquivo `.env` guarda informações de configurações de modo geral, inclusive configurações do banco. As informações presentes no arquivo .env a respeito do banco de dados também estão presentes no arquivo. Antes de vermos as configurações em si, por que temos essa relação dos dois arquivos?
+O arquivo `config/database.php` é utilizado exclusivamente para guardar as configurações a respeito do banco de dados da aplicação. Já o arquivo `.env` guarda informações de configurações de modo geral, inclusive configurações do banco. As informações presentes no arquivo `.env` a respeito do banco de dados também estão presentes no arquivo. Você deve estar se perguntando: por que há configuração em dois locais?
 
-O arquivo `.env` não deve ser compartilhado publicamente, ele não fica no github ou outro repositório de código e, portanto, é o lugar onde podemos ter mais segurança para adicionar, por exemplo, senha de acesso ao banco. As informações necessárias no `database.php` pode ser definidas apenas do `.env`. Desse modo, não sendo necessário definí-las no database.php.
+O arquivo `.env` não deve ser compartilhado publicamente, ele não fica no github ou outro repositório de código e, portanto, é o lugar onde podemos ter mais segurança para adicionar, por exemplo, senha de acesso ao banco. As informações necessárias no `database.php` podem ser definidas apenas no `.env`. Desse modo, não sendo necessário definí-las no `database.php`.
 
-## Usando banco de dados SQLITE
+## Usando banco de dados SQLite
 
-Vamos iniciar as nossas configurações com um banco mais simples de usar: O SQLITE. O banco será um arquivo no disco e ficará armazenado em nosso projeto.
+Vamos iniciar as nossas configurações com um banco mais simples de usar: O `SQLite`. O banco será um arquivo no disco e ficará armazenado em nosso projeto.
 
 O primeiro passo é criar o arquivo `database.sqlite` na pasta `database/`. O arquivo será armazenado neste local por conveniência. É possível armazená-lo em outro lugar.
 
@@ -58,15 +58,12 @@ return [
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
-        
     //aqui tem mais conexão que foram omitidas porque não as utilizaremos
-
     ],
-
 ];
 ```
 
-No trecho de código acima, temos alguns pontos importantes da relação de `database.php` e `.env`. No arquivo `database.php` sempre que houver o uso da função `env()`, estamos buscando uma informação presente no arquivo. Dito isso, vamos a configuração do SQLite.
+No trecho de código acima, temos alguns pontos importantes da relação de `database.php` e `.env`. No arquivo `database.php` sempre que houver o uso da função `env()`, estamos buscando uma informação presente no arquivo. Dito isso, vamos para configuração do SQLite.
 
 Observe a seguinte linha no arquivo database.php ilustrada abaixo:
 
@@ -74,9 +71,9 @@ Observe a seguinte linha no arquivo database.php ilustrada abaixo:
 'default' => env('SQLITE_CONNECTION', 'sqlite'),
 ```
 
-A declaração `default` indica qual a conexão padrão que nosso projeto utilizará para o banco de dados. Neste caso, temos o uso da função `env`. O que essa declaração significa? Primeiro, que vamos procurar uma variável `SQLITE_CONNECTION` no arquivo `.env` caso ela não seja definida lá, então vamos usar o segundo argumento como sendo a conexão padrão. No exemplo ilsutrado, o argumento é `sqlite`.
+A declaração `default` indica qual a conexão padrão que nosso projeto utilizará para o banco de dados. Neste caso, temos o uso da função `env()`. O que essa declaração significa? Primeiro, que vamos procurar uma variável `SQLITE_CONNECTION` no arquivo `.env` caso ela não seja definida lá, então vamos usar o segundo argumento como sendo a conexão padrão. No exemplo ilustrado, o argumento é `sqlite`.
 
-O arquivo .env vem com várias definições padrão de configurações do projeto. A parte que interessa para o nosso banco de dados funcionar está destacada abaixo:
+O arquivo `.env` vem com várias definições padrão de configurações do projeto. A parte que interessa para o nosso banco de dados funcionar está destacada abaixo:
 
 ```php
 #mysql connection
@@ -95,19 +92,19 @@ Observe que o arquivo tem duas configurações e o `#` é um comentário na conf
 
 Por fim, para testar a sua conexão com o banco de dados basta fazer o seguinte procedimento:
 
-```
+```bash
 php artisan tinker
 ```
 
-O tinker permite que você  acesso um interpretador de comando que permite a você testar coisas da aplicação, digamos, de maneiar isolada. Neste exemplo de configuração do banco, você não precisa abrir uma págian para ver se o a conexão está `OK`. 
+O `tinker` permite que você  acesse um interpretador de comando possibilitando o teste de recursos da aplicação, digamos, de maneira isolada. Neste exemplo de configuração do banco, você não precisa abrir uma página para ver se a conexão está ativa. 
 
-Com o tinker aberto, digite a seguinte declaração(código php):
+Com o `tinker` aberto, digite a seguinte declaração no interpretador(código php):
 
 ```php
->>> \DB::connection()->getPDO()
+\DB::connection()->getPDO()
 ```
 
-O resultado esperado está ilustrado a seguir para a conexão utiliando o sqlite:
+O resultado esperado está ilustrado a seguir para a conexão utilizando o SQLite:
 
 ```
 => PDO {#4506
@@ -128,10 +125,9 @@ O resultado esperado está ilustrado a seguir para a conexão utiliando o sqlite
    }
 ```
 
-
 ## Usando banco de dados MYSql
 
-Na seção anterior, vimos como conectar nossa aplicação com o banco de dados SQLITE. Agora vamos ver como fazer o mesmo com o `MySQL`. O primeiro passo é ter o MySQL instalado em sua máquina. Neste documento, será considerado o ambiente local de desenvolvimento e isso é importante na configuração da conexão com banco de dados.
+Na seção anterior, vimos como conectar nossa aplicação com o banco de dados SQLite. Agora vamos ver como fazer o mesmo com o `MySQL`. O primeiro passo é ter o MySQL instalado em sua máquina. Neste documento, será considerado o ambiente local de desenvolvimento e isso é importante na configuração da conexão com banco de dados.
 
 Após a instalação do MySQL, você deve criar o esquema de banco de dados da sua aplicação. Não precisa criar as tabelas em si e seus relacionamentos neste momento. Na próxima seção, vamos falar sobre as tabelas. Para criar o esquema de banco de dados do exemplo que estamos vendo, utilizarei o seguinte comando no MySQL:
 
@@ -151,17 +147,17 @@ DB_USERNAME=root
 DB_PASSWORD=romerito
 ```
 
-Observe que a configuração para o MySQL possui mais informações. Vamos lá:
+Observe que a configuração para o MySQL possui mais informações que o SQLite. Vamos lá:
  - MYSQL_CONNECTION: indica o nome da conexão que vamos utilizar que é `mysql`. 
- - DB_HOST: indica o host do banco, ou seja, o lugar onde o banco está instalado. Neste exemplo, é o mesmo da aplicação.
+ - DB_HOST: indica o host do banco, ou seja, o lugar onde o banco está instalado. Neste exemplo, é o mesmo da aplicação (ambiente local).
  - DB_PORT: é a porta utilizada para comunicação com banco e está definida com a porta padrão do MySQL.
  - DB_DATABASE: indica o nome do esquema de banco de dados que você tem no MySQL - seu banco.
  - DB_USERNAME: nome do usuário que tem acesso ao banco para realizar operações. No exemplo, o usuário root padrão da instalação.
  - DB_PASSWORD: senha do usuário para acesso ao banco.
 
- Todas essas informações também podem ser inseridas no arquivo `database.php`. Entretanto, lembre-se que este arquivo por padrão fica disponível em repositórios caso você adicione seu projeto em dos repostórios disponíveis como Github.
+ Todas essas informações também podem ser inseridas no arquivo `database.php`. Entretanto, saiba que este arquivo por padrão é enviado para repositórios como GITHUB e GITLAB. Logo, dados sigilosos como senhas podem ficar públicas.
 
- Mas como o Laravel obtém esses dados para conectar a aplicação com o banco e dados se elas não devem ficar no `database.php`? A Resposta é simples, da mesma forma que fez com o SQLITE. Veja o trecho do código de configuração do MySQL no arquivo `database.php`:
+ Está confuso o fato de configurações do banco de dados e como o Laravel obtém esses dados de configurações sendo que não é recomendado ficarem definidas no arquivo `database.php`? A Resposta é simples: da mesma forma que você fez com o SQLite. Veja o trecho do código de configuração do MySQL no arquivo `database.php`:
 
  ```php
  //trecho do arquivo database.php com configuração do mysql
@@ -186,9 +182,9 @@ Observe que a configuração para o MySQL possui mais informações. Vamos lá:
   ],
  ```
 
-Nas configurações acima, observe o uso da funçao `env()` para obter os valores de configuração do banco que foram adicionados ao arquivov `.env`.
+Nas configurações acima, observe o uso da funçao `env()` para obter os valores de configuração do banco que foram adicionados ao arquivov `.env`. Portanto, você pode definir `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` e `DB_PASSWORD` no arquivo .env e resgatá-los com `.env()`.
 
-Para testar se a conexão com MySQL e seu banco estão satisfeitas, use o mesmo procedimento indicado no teste do SQLITE.
+Para testar se a conexão com MySQL e seu banco estão satisfeitas, use o mesmo procedimento indicado no teste do SQLite.
 
 Até aqui você deve estar fazendo a seguinte pergunta: Onde estão as tabelas do banco de dados? Veremos a resposta a seguir.
 
@@ -198,7 +194,7 @@ O nosso banco de dados será construído a partir do conceito de Migrations (mig
 
 Com as migrations podemos criar, alterar ou remover tabelas da nossa base de dados sem necessariamente manipular o MySQL diretamente. 
 
-No Laravel, podemos definir migratinos para criar uma tabela e migrations para alterar uma tabela. A medida que vamos escrevndo migrations para criar e alterar as tabelas do banco estamos, de certa forma, criando novas versões do nosso banco de dados. Sugiro que você busque mais leituras sobre esse tópido: vale a pena!
+No Laravel, podemos definir migrations para criar e alterar tabelas. Considerando isso, o nosso banco é definido pela criação de migrações que especificam as tabelas e também pela alteração das tabelas criadas. Dessa maneira, cada novo conjunto de migrações que definiem novas tabelas seria uma nova versão do banco.
 
 ## Criando Migrations
 
@@ -208,11 +204,11 @@ Antes de criarmos uma migração vamos observar a figura abaixo que define, por 
 
 O esquema de banco de dados da aplicação terá duas tabelas para guardar usuários e tarefas. 
 
-Podemos utilizar o `artisan` para criar uma migration. Vamos fazer a migration para a tabela Task com  o comando abaixo:
+Podemos utilizar o `artisan` para criar uma migration. Vamos fazer a migration para a tabela `tasks` com  o comando abaixo:
 
 > php artisan make:migration create_tasks_table
 
-Indicamos no comando acima que vamos criar uma migration e seu nome será create_tasks_table. O resultado é o arquivo `create_tasks_table.php` armazenado na pasta `database/migrations/create_tasks_table.php`. O conteúdo dele é ilustrado abaixo:
+Indicamos no comando acima que vamos criar uma migration e seu nome será `create_tasks_table`. O resultado é o arquivo `create_tasks_table.php` armazenado na pasta `database/migrations/create_tasks_table.php`. O conteúdo dele é ilustrado abaixo:
 
 ```php
 // Trecho da migração de criação da tabela tarefas
@@ -248,11 +244,11 @@ return new class extends Migration
 
 A migration vem com duas funções: `up` e `down`. A função `up` é utilizada para criar uma tabela no banco de dados com as definições que estão dentro da função `Schema::create`. Já a função `down` tem o papel de excluir a tabela do banco de dados. A saber o nome da tabela será `tasks` e isso foi definido quando adicionamos o arquivo `create_tasks_table`.
 
-A esta altura você deve ter observado o conteúdo da função `up` e notado alguns similaridades com as definições de tabela que geralmente fazemos no MySQL. Se pensou assim, está corretíssimo. Através da variável `$table` podemos definir as colunas: `id`, `description`, `status` e outros que forem necessários.
+A esta altura você deve ter observado o conteúdo da função `up` e notado alguns similaridades com as definições de tabela que geralmente fazemos no MySQL. Se pensou assim, está corretíssimo. Através da variável `$table` podemos definir as colunas: `id`, `description`, `status` e outras que forem necessários.
 
 ## Relacionamentos nas migrations
 
-Você deve ter notado na figura que ilustra as entidades User e Task que elas possuem um relacionamento. Esse relacionamento deve ser expresso na migração para ser adicionado no MySQL. Ele expresso por `chave-estrangeira` e são necessários dois passos:
+Você deve ter notado na figura que ilustra as entidades User e Task que elas possuem um relacionamento. Esse relacionamento deve ser expresso na migração para ser adicionado no MySQL. Ele é expresso por `chave-estrangeira` e são necessários dois passos:
 
 - Definir a coluna que vai guardar a chave-estrangeira: 
 ```php
@@ -268,9 +264,9 @@ $table->unsignedBigInteger('user_id');
 
 # Modelos
 
-Nas seções anteriores, a configuração de conexão com o banco de dados foi realizada e um exemplo de migations foi criado. Observe nos arquivos presentes em `database/migration` que há várias outas migrations que o próprio Laravel utiliza. Voltaremos a falar delas quando for adicionar autenticação de usuários ao sistema. Por hora, observe que lá há uma migration `create_users_table`, que adicionará a tabela de usuários. Portanto, nosso esquema de banco de dados para a aplicação `todolist` está pronto.
+Nas seções anteriores, a configuração de conexão com o banco de dados foi realizada e um exemplo de migations foi criado. Observe nos arquivos presentes em `database/migration` que há várias outas migrations que o próprio Laravel utiliza. Voltaremos a falar delas quando formos adicionar autenticação de usuários ao sistema. Por hora, observe na pasta há uma migration denominada `create_users_table`, que adicionará a tabela de `usuários`. Portanto, nosso esquema de banco de dados para a aplicação `todolist` está pronto(Considerando as entidades Task e User).
 
-Para acessarmos os dados do banco, vamos utilizar o conceito de modelos. A camada de modelo inclui os modelos que temos e eles estão relacionados as endidades que modelos para o nosso problema. No caso do exemplo discutido aqui temos dois modelos: `User` e `Task`. O modelo `User` já vem pronto e foi definido pela equipe do Laravel. Nós podemos modificá-lo para atender demandas específicas da nossa aplicação. 
+Para acessarmos os dados do banco, vamos utilizar o conceito de modelos. A camada de modelo inclui os modelos que temos e eles estão relacionados as endidades que modelamos para o nosso problema. No caso do exemplo discutido neste exemplo temos dois modelos: `User` e `Task`. O modelo `User` já vem pronto e foi definido pela equipe do Laravel. Nós podemos modificá-lo para atender demandas específicas da nossa aplicação. 
 
 Desta maneira precisamos criar o nosso modelo `Task` que é específico do nosso problema: gerenciar tarefas.
 
@@ -280,7 +276,7 @@ O Laravel fornece um comando simples e intuitivo para criação de modelos. O co
 
 > php artisan make:model Task
 
-O resultado do comando acima é ilustrado abaixo:
+O resultado do comando é ilustrado abaixo:
 
 ```php
 //Código do modelo App\Models\Task
@@ -303,11 +299,11 @@ O modelo gerado pelo artisan nos permite realizar muitas operacoes de acesso ao 
 
 ## Relacionamentos entre entidades
 
-Até aqui já temos uma boa infraestrutura para o acesso ao banco de dados da nossa aplicacão. Já realizamos a configuração com o banco de dados, definimos uma migracão para criar a tabela tarefas e acabamos de definir um modelo.
+Até aqui já temos uma boa infraestrutura para o acesso ao banco de dados da nossa aplicacão. Já realizamos a configuração com o banco de dados, definimos uma migracão para criar a tabela `tasks` e acabamos de definir um modelo.
 
 Há um detalhe importante para fecharmos a implementacão de acesso ao banco de dados para este exemplo (até aqui pelo menos). Trata-se de definir no modelo Task o relacionamento que existe na migracão e foi implementado no banco de dados. Relacionamento 1:N entre usuários e tarefas.
 
-A classe Task vai passar a ter a seguinte implementacão:
+A classe `Task` vai passar a ter a seguinte implementacão:
 
 ```php
 // Trecho de Task.php
@@ -327,9 +323,11 @@ class Task extends Model
 }
 ```
 
-Na implementacão da função `user()`, nós indicamos para o Laravel recuperar o usuário relacionado a tarefa (Lembre-se que cada tarefa tem um usuário associado a ela). Isso é especificado pelos parâmetros da funcão `belongsTo` (pertence à): `User::class`, `user_id`, `id`. O primeiro argumento indica a classe a qual o modelo Task está relacionado que é a classe User. O segundo argumento, `user_id`, indica qual é a chave estrangeira presente na tabela `tasks` (onde ficam as tarefas). Por fim, o argumento `id` é a coluna na tabela usuários que está relacionada a chave estrangeira `user_id`.
+Na implementacão da função `user()`, nós indicamos para o Laravel recuperar o usuário relacionado a tarefa (Lembre-se que cada tarefa tem um usuário associado a ela). Isso é especificado pelos parâmetros da funcão `belongsTo` (pertence à): `User::class`, `user_id`, `id`. Esta função faz parte do Eloquent que é responsável por facilitar o acesso a banco de dados tanto através de modelos como funções auxiliares para os relacionamentos entre as entidades.
 
-A funcão `user()` vai permitir que o acesso ao usuário relacionado com uma tarefa específica seja feita de forma mais prática no contexto do uso da linguagem php. Na secão seguinte, vamos explorar o uso dessa funcao e você verá o quando ela é útil. Muitas outras podem ser definidas de forma análoga a esta.
+Na função `belongsTo()`, o primeiro argumento indica a classe a qual o modelo `Task` está relacionado que é a classe `User`. O segundo argumento, `user_id`, indica qual é a chave estrangeira presente na tabela `tasks` (onde ficam as tarefas). Por fim, o argumento `id` é a coluna na tabela usuários que está relacionada a chave estrangeira `user_id`.
+
+A funcão `user()` vai permitir que o acesso ao usuário relacionado com uma tarefa específica seja feita de forma mais prática no contexto do uso da linguagem php. Na secção seguinte, vamos explorar o uso dessa função e você verá o quanto ela é útil. Muitas outras podem ser definidas de forma análoga a esta.
 
 # Modelos e Controladores
 
