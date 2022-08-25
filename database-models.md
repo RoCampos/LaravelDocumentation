@@ -331,9 +331,9 @@ A funcão `user()` vai permitir que o acesso ao usuário relacionado com uma tar
 
 # Modelos e Controladores
 
-Se você chegou até aqui na leitura e também aplicacão em seu projeto, suponho que já possui toda a infraestrutura de banco de dados do exemplo pronta para ser utilizada. 
+Se você chegou até aqui na leitura e na aplicacão do exemplo em seu projeto, suponho que já possui toda a infraestrutura de banco de dados do exemplo pronta para ser utilizada. 
 
-Neste momento, utilizar o modelo Task para acessar o banco de dados e realizar operacões básicas. Entretanto, vamos fazer isso diretamente do controlador TaskController e vincular os dados as views que já temos no projeto. Observe a pasta `resources/views/todolist`. 
+Neste momento, vamos utilizar o modelo `Task` para acessar o banco de dados e realizar operacões básicas. Entretanto, isso será feito no controlador `TaskController`. As operações consistem em recuperar dados do banco e juntar com as `s` para montar as páginas que o usuário receberá durante o uso do sistema.
 
 ## Operação Salvar Tarefa
 
@@ -353,7 +353,7 @@ public function create()
 }
 ```
 
-Esta função vai simplemente retornar para o usuário o formulário para preenchimento dos dados da tarefa, que neste exemplo é apenas uma descrição. Abaixo segue trecho do formulário (sem CSS).
+Esta função vai simplemente retornar para o usuário o formulário para preenchimento dos dados da tarefa.  Neste exemplo, a única informação solicitada ao usuário é a descrição da tarefa. Abaixo segue trecho do formulário (sem CSS):
 
 ```html
 <!-- Trecho de create.blade.php -->
@@ -373,17 +373,21 @@ Esta função vai simplemente retornar para o usuário o formulário para preenc
 </form>
 ```
 
-Este formulário é parte da resposta que o usuário tem quando acessar `/tasks/create`. Agora que tem o formulário, ele preenche e envia para o servidor. Neste formulário, tem informações importantes para o servidor saber o que fazer com o envio. 
+Este formulário é parte da resposta que o usuário tem quando acessar `/tasks/create`. Agora que tem o formulário, ele preenche e envia para o servidor. Neste formulário, há informações importantes para o servidor saber que ação realizar quando chegar a requisição.
 
-Primeiro, o formulário será enviado para uma rota `/tasks` usando uma requisição do tipo `method=POST`. Além disso, adicionarmos a tag blade `@csrf` que permite dar mais proteção contra o ataque LINK.
+O formulário será enviado para uma rota `/tasks` usando uma requisição do tipo `method=POST`. Além disso, adicinamos a tag blade `@csrf` que permite dar mais proteção contra o ataque [CSRF](https://pt.wikipedia.org/wiki/Cross-site_request_forgery).
 
-Como sabermos que função de TaskController vai processar o formulário enviado para a rota com o método especificado no parágrafo anterior? Podemos observar a lista de rotas da aplicação com `php artisan route:list` novamente e ver o seguinte:
+Uma dúvida que pode surgir para o programador inciante no framework é a seguinte: como framework identifica que rota deve atender quando chegar uma requisição quando as rotas têm nomes iguais com métodos HTTP diferentes? Podemos observar a lista de rotas da aplicação com `php artisan route:list` novamente e ver o seguinte:
+
 
 ```bash
-POST                    tasks ...... tasks.store › TaskController@store
+METHOD                  Rota         Nome da Rota     Ação
+POST                    tasks ...... tasks.store    › TaskController@store
 ```
 
-Observe que o formulário será enviado para a função `store` de `TaskController`. Logo, vamos focar na implementação desta função para providenciar o cadastro da tarefa. A seguir o código da função `store()`:
+No bloco acima, temos um trecho do resultado do `route:list`. Nele você observa que cada rota tem um caminho(Rota) e um Method. Logo, são essas informações que permitem o servidor diferenciar duas rotas `/tasks` com `methods` diferentes.
+
+Agora que você sabe como o servidor diferencia as rotas e como ele vai saber a rota para salvar um registro de tarefa no banco, veja seguir o código da função `store()` responsável por receber o formulário de tarefa e cadastrar no banco:
 
 ```php
 // trecho de TaskController.php
@@ -399,7 +403,9 @@ public function store(Request $request)
 }
 ```
 
-A função `store()` tem um argumento que é um objeto da classe `Request`. Este objeto é injetado na função pelo Laravel. Com ele podemos obter informações da requisição enviada para esta função. É exatamente isso que faremos. Primeiro, vamos pegar o dado do formulário cujo `input` tem o nome de `task`. Para isto, basta usar a função `$request->post()`. Em seguida, criamos uma tarefa `$task = new Task;`, adicionamos a ela o usuário que é dono da tarefa e, por fim, salvamos. Por questão de simplicidade, há um usuário padrão no sistema e seu `id=1`. A função `save()` faz a operação `INSERT` do `SQL`. Por fim, o usuário é redirecionado para a página de listagem das tarefas.  
+A função `store()` tem um argumento que é um objeto da classe `Request`. Este objeto é injetado na função pelo Laravel. Com ele podemos obter informações da requisição enviada.. É exatamente isso que faremos. Primeiro, vamos pegar o dado do formulário cujo `input` tem o nome de `task`. Para isto, basta usar a função `$request->post()`. Segundo, criamos uma tarefa `$task = new Task;`, adicionamos a ela o usuário que é dono da tarefa e salvamos. A função `save()` faz a operação `INSERT` do `SQL`. Por fim, o usuário é redirecionado para a página de listagem das tarefas.  
+
+Observe que na linha `$task->user_id = 1;` nós vinculamos um usuário a tarefa. Isso se torna obrigatório pois nossa migration para criar a tabela `tasks` coloca uma chave estrangeira para o id do usuário (relacionamento 1:n explicado anteriormente). 
 
 ## Listar todas as tarefas
 
@@ -418,7 +424,7 @@ public function index()
 
 Observe dois detalhes: o uso do modelo `Task` e também a passagem da variável `$tasks` para a função `view`. 
 
-Primeiro, vamos iniciar pelo uso de Task::all(). Esta função fará uma consulta ao banco de dados do tipo `SELECT * FROM tasks`. O resultado será armazenado em `$tasks`. 
+Primeiro, vamos iniciar pelo uso de Task::all(). Esta função fará uma consulta ao banco de dados do tipo `SELECT * FROM tasks`. O resultado será armazenado em `$tasks`. É importante observar que esta função, neste momento obtém todas as tarefas e não faz distinção do usuário proprietário dela.
 
 Segundo, com o resultado das tarefas guardado em `$tasks` vamos construir a página de listagem das tarefas. Para isso, utilizamos o template `todolist.dashboard`. Abaixo segue o trecho de código onde os dados das tarefas são utilizados para construir a página.
 
@@ -448,9 +454,9 @@ Segundo, com o resultado das tarefas guardado em `$tasks` vamos construir a pág
 </ul>
 ```
 
-Esse código vai gerar a seguint tela: ![](./tasklist2.jpeg)
+Esse código vai gerar a seguinte tela(Observe que a imagem é um recorte da página): ![](./tasklist2.jpeg)
 
-Utilizamos a tag blade `@foreach` para realizar um laço de repetição com as tarefas que conectamos ao template. Para cada `$item` da lista, vamos adicionar um elemento HTML `li` a página. Neste elemento, haverá duas informações: `$item->description` e `$item->status`. O status é utilizado na declaração `@if @else @endif` para determinar uma mensagem mais amigável na interface. 
+Observe o código HTML acima, nele utilizamos a tag blade `@foreach` para realizar um laço de repetição com as tarefas que conectamos ao template. Para cada `$item` da lista, vamos adicionar um elemento HTML `li` a página. Neste elemento, haverá duas informações: `$item->description` e `$item->status`. O status é utilizado na declaração `@if @else @endif` para determinar uma mensagem mais amigável na interface sendo possível mostrar quando a tarefa foi realizada e quando está pendente.
 
 ## Editar Tarefa
 
@@ -493,7 +499,15 @@ O código do formulário para edição está definida como a seguir:
 </form>
 ```` 
 
-A rota para onde este formulário será enviada é `/tasks/{task}` e utiliza o verbo HTTP `PUT`. Entretanto, o HTML não utiliza este método. Portanto, definidomos `method=POST` e adicionar a tag blade `@method('PUT')` dentro do formulário. Desta maneira, o Controlador receberá a requisção de atualização da tarefa na rota correta. Observe que utilizar na action a seguinte atribuição `{{url('/tasks', ['task'=>$task->id])}}` . Aqui indicamos que vamos utilizar a rota `/tasks/{task}` onde `{task}` será o valor de `$task->id`. A tarefa que estamos tentando editar. Imaginando que você queira editar a primeira tarefa salva no banco de dados e de `id=1`, então teríamos `/tasks/1`.
+A rota para onde este formulário será enviada é `/tasks/{task}` e utiliza o verbo HTTP `PUT`. Entretanto, o HTML não utiliza este método. Portanto, definimos `method=POST` e adicionamos a tag blade `@method('PUT')` dentro do formulário. Desta maneira, o Controlador receberá a requisção de atualização da tarefa na rota correta. Observe que utilizamos na action a seguinte atribuição `{{url('/tasks', ['task'=>$task->id])}}` . Aqui indicamos que vamos utilizar a rota `/tasks/{task}` onde `{task}` será o valor de `$task->id`. A tarefa que estamos tentando editar. 
+
+Imaginando que você queira editar a primeira tarefa salva no banco de dados e de `id=1`, então teríamos a solicitaação `POST` para `/tasks/1` com a adição da informação `PUT` via `@method('PUT')`. Desta maneira, o servidor comprende que você está usando a rota ilustrada abaixo:
+
+
+```bash
+METHOD                  Rota         Nome da Rota     Ação
+PUT|PATCH               tasks ...... tasks.update   › TaskController@update
+```
 
 Ao chegar no servidor, a função que vai processar a atualização dos dados é `update()` cujo código é ilustrado abaixo:
 
@@ -503,10 +517,13 @@ public function update(Request $request, $id)
 {
     $task = Task::find($id);
 
-    if (NULL !== $request->post('task'))
+    //se formulário chega aqui via edição de descrição
+    if (NULL !== $request->post('task')) {
         $task->description = $request->post('task');
-    else 
+    } else {
+        //se a tarefa foi atualizada para concluída
         $task->status = 1;
+    } 
 
     $task->save();
 
@@ -516,11 +533,11 @@ public function update(Request $request, $id)
 }
 ```
 
-A função update recebe dois parâmetros: O `Request` que permite obter dados do formulário com novas informações da tarefa e também o `id` da tarefa que está sendo atualizada. A primeira coisa a ser feita na função é obter, através de `Task::find($id)`, a tarefa que será atualizada e em seguida obtém-se a nova descrição da tarefa usando `$request->post` (por hora somente esta atualização é realizada). Um detalhe importante é que o uso do if nesta função. Caso tenha aluma nova descrição no `$request->post`, então ela será aplicada e o status da tarefa será mantido. Por fim, salvar a atualização com $task->save() e redirecionar o usuário para rota `show`. 
+A função update recebe dois parâmetros: O `Request` que permite obter dados do formulário com novas informações da tarefa e também o `id` da tarefa que está sendo atualizada. A primeira coisa a ser feita na função é obter, através de `Task::find($id)`, a tarefa que será atualizada e em seguida obtém-se a nova descrição da tarefa usando `$request->post` (por hora somente esta atualização é realizada). Um detalhe importante é que o uso do if nesta função. Caso tenha alguma nova descrição no `$request->post`, então ela será aplicada e o status da tarefa será mantido. Por fim, salvar a atualização com `$task->save()` e redirecionar o usuário para rota `show`. 
 
 ## Mostrar Tarefa
 
-A operação de mostrar uma tarefa consite em adicionar um link para a tarefa específica na listagem de tarefas que vimos na seção Listar todas as Tarefas. O código abaixo ilustra trecho do HTML que permite acessar uma tarefa específica e mostrá-la:
+A operação de mostrar uma tarefa consite em adicionar um link para a tarefa específica na listagem de tarefas que vimos na seção **Listar todas as Tarefas**. O código abaixo ilustra trecho do HTML que permite acessar uma tarefa específica e mostrá-la:
 
 ```html
 <!-- trecho do arquivo dashboard.blade.php -->
@@ -543,7 +560,7 @@ public function show($id)
 }
 ```
 
-O que a função `show()` faz é buscar a tarefa no banco com base no `$id` passado na rota. A variável $task terá seu valor passado para o template `todolist.show`. Este processo é análogo ao exemplo da listagem de todas as tarefas explicado neste texto.
+O que a função `show()` faz é buscar a tarefa no banco com base no `$id` passado na rota. A variável `$task` terá seu valor passado para o template `todolist.show`. Este processo é análogo ao exemplo da listagem de todas as tarefas explicado neste texto.
 
 
 ## Remover Tarefa
@@ -552,7 +569,7 @@ Esta operação não exige ter uma página completa como a criação/edição de
 
 Este botão será adicionado a página `todolist.show`. Além disso, vamos ter a seguinte condição. Se a tarefa estiver pendente, ela não pode ser removida. Sendo removida apenas quando for marcada como concluída (com o projeto em execução, você pode testar estas opções).
 
-Abaixo segue o trecho da página show que ilsutra a definição do botão para remoção da tarefa(sem CSS):
+Abaixo segue o trecho da página show que ilustra a definição do botão para remoção da tarefa(sem CSS):
 
 ```html
 <!-- trecho do código de todolist.show -->
