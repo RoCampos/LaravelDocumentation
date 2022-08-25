@@ -596,25 +596,17 @@ Abaixo segue o trecho da página show que ilustra a definição do botão para r
 </div>
 ```
 
-Est trecho de código mostra apenas a parte onde definimos dois botões com base no `$task->status` da tarefa. Observe a tag `@if @else @endif` que é utilizada. Se a tarefa estiver como pendente, vamos definir um form que usa `@method('PUT')`, que já foi mencionado na seção de edição de tarefas. Neste caso, ao enviarmos o formuário de atualização do registro, não enviamos dados para alteração do texto da tarefa e de acordo com a função `update()`, ilustrada novamente abaixo, o servidor vai atualizar o status da tarefa:
+Est trecho de código mostra apenas a parte onde definimos dois botões com base no `$task->status` da tarefa. Observe a tag `@if @else @endif` que é utilizada. Se a tarefa estiver marcada como concluída, você vera um botão com um `X` que indica a remoção. Ao clicar neste botão, você está fazendo uma requisição para `/tasks/{task}`(na aplicação a seria `/tasks/1` para uma tarefa com id=1) via método POST e incluindo na requisição a informação `@method('DELETE')`. Observe que o `<form>` da requisição não tem inputs com dados. Logo, esta operação apenas sinaliza para o servidor que queremos remover a tarefa em específico. 
+
+No lado do servidor, o controlador `TaskController` será acionado, já que ele possui a função associada a remoção da tarefa. A função de remoção é `destroy()` e seu código está ilustrado abaixo:
 
 ```php
-// trecho de TaskController.php
-public function update(Request $request, $id)
-{
-    $task = Task::find($id);
-
-    if (NULL !== $request->post('task'))
-        $task->description = $request->post('task');
-    else 
-        $task->status = 1;
-
-    $task->save();
-
-    return redirect()->to(route('tasks.show', [
-        'task' => $task->id,
-    ]));
-}
+public function destroy($id)
+  {
+      $task = Task::find($id);
+      $task->delete();
+      return redirect(url('/tasks'));
+  }
 ```
 
-Como o formulário de atualização da tarefa para marcá-la como concluída não envia o input `task`, o código executado é o `else`. Neste caso, `$task->status = 1;`.
+A função recebe um `$id` como parâmetro e com base nele buscamos no banco de dados a tarefa específica via `Task::find()`. Com a tarefa em mãos, podemos aplicar a função `$task->delete()` que remove definitivamente o registro do banco de dados. Por fim, redirecionamos o usuário para a listagem de tarefas.
